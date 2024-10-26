@@ -1,83 +1,149 @@
 import random
-# list of all creatures in simulation, all dead creatures are removed at the end of eah cycle
-creatures = []
-# number of cycles of simulation that has been run, every cycle adds +1 to this variable
-cycles = 0
+import creature
+import time
+import turtle
+import multiprocessing
+import cProfile
+
+screen = turtle.Screen()
+screen.title("Autonomia-X")
+screen.tracer(1, 10)
+creature_classes = {'Bacteria': creature.Bacteria,
+                    'Protista': creature.Protista,
+                    'Plantae': creature.Plantae,
+                    'Fungi': creature.Fungi,
+                    'Animalia': creature.Animalia}
 
 
-class Creature():
+# main class for autonomia2 world
+class World:
     def __init__(self):
-        self.location = [random.randint(-50, 50), random.randint(-50, 50)]
-        self.alive = True
-        # lifespan determines how many cycles the creature will live before dying
-        self.lifespan = 5
-        self.lifetime = 0
-        self.health = 100
-        self.reproduce = True
-        self.speed = 1
-        self.attack = 1
-        self.defense = 1
-        self.move = 1
-        self.name = random.randint(1, 100000000)
-        self.oxygen = 100
+        self.status = True
+        self.start_time = time.time()
         self.carbon = 100
         self.nitrogen = 100
+        self.oxygen = 100
+        self.CO2 = 100
+        self.resources = {'Carbon': self.carbon,
+                          'Nitrogen': self.nitrogen,
+                          'Oxygen': self.oxygen}
+        self.bacteria = []
+        self.protista = []
+        self.plantae = []
+        self.fungi = []
+        self.animalia = []
+        self.creatures = [self.bacteria, self.protista, self.plantae, self.fungi, self.animalia]
+        self.total_creatures = 0
+        self.total_creatures_text = f'Total Creatures: {self.total_creatures}'
+        self.total_creatures_text_turtle = turtle.Turtle()
+        # Set the turtle to display creature count
+        self.total_creatures_text_turtle.penup()
+        self.total_creatures_text_turtle.goto(-350, 350)
+        self.total_creatures_text_turtle.write(self.total_creatures_text, align="center", font=("Arial", 16, "bold"))
+        self.total_creatures_text_turtle.hideturtle()
 
-    def move(self):
-        self.location[0] += 1
-        self.location[1] += 1
+    # checks if any  creatures are past their intended lifespan and removes them if so
+    def checkalive(self, each, to_remove, now):
+        if now >= each.lifespan:
+            each.die()
+            to_remove.append(each)
+            return False
+        elif each.alive == False:
+            each.die()
+            to_remove.append(each)
+            return False
 
-    def eat(self, prey):
-        self.oxygen += prey.oxygen
-        self.carbon += prey.carbon
-        self.nitrogen += prey.nitrogen
+    # initial population of world, should only run once
+    def populate(self):
+        total = 10
+        screen.tracer(0)
+        for i in range(0, total):
+            new_creature = creature.Bacteria()
+            self.bacteria.append(new_creature)
+        for i in range(0, total):
+            new_creature = creature.Plantae()
+            self.plantae.append(new_creature)
+        for i in range(0, total):
+            new_creature = creature.Protista()
+            self.protista.append(new_creature)
+        for i in range(0, total):
+            new_creature = creature.Fungi()
+            self.fungi.append(new_creature)
+        for i in range(0, total):
+            new_creature = creature.Animalia()
+            self.animalia.append(new_creature)
+        screen.tracer(1, 10)
 
-    def die(self):
-        self.alive = False
-        self.oxygen = 0
-        self.nitrogen = 0
-        self.carbon = 0
-        print(f'{self.name} has died. {self.name} lived for {self.lifetime} cycles.')
+    # refreshes current creatures in world
+    def update(self):
+        self.total_creatures = len(self.bacteria) + len(self.protista) + len(self.plantae) + len(self.fungi) + len(self.animalia)
 
-    def reproduce(self):
-        b = Creature()
+    def print_update(self):
+        while True:
+            self.update()
+            print(self.total_creatures)
 
-    # main creature function called in cycle, other class functions will be embedded in this eventually, such as hunt, reproduce, eat
-    def live(self):
-        self.lifespan -= 1
-        self.lifetime += 1
-        print(f'{self.name} has {self.lifespan} cycle lives remaining.')
-        if self.lifespan <= 0:
-            print(f'{self.name} has died of old age.')
-            self.die()
+    def reproduction(self, each):
+        if each.baby:
+            screen.tracer(0)
+            creature_class = creature_classes[each.type]
+            i = creature_class(location=[each.location[0], each.location[1]])
+            if i.type == 'Bacteria':
+                j = creature_class(location=[each.location[0] + 10, each.location[1] + 10])
+                self.bacteria.append(i)
+                self.bacteria.append(j)
+            elif i.type == 'Fungi':
+                self.fungi.append(i)
+            elif i.type == 'Plantae':
+                j = creature_class(location=[each.location[0] + 10, each.location[1] + 10])
+                self.plantae.append(i)
+                self.plantae.append(j)
+            elif i.type == 'Protista':
+                self.protista.append(i)
+            elif i.type == 'Animalia':
+                self.animalia.append(i)
+            screen.tracer(1, 10)
+
+    def shuffle(self, life_cycle):
+        for kingdom in self.creatures:
+            for each_creature in kingdom:
+                life_cycle.append(each_creature)
+        random.shuffle(life_cycle)
+
+    def total_creatures_text_print(self):
+        self.update()
+        self.total_creatures_text = f'Total Creatures: {self.total_creatures}'
+        self.total_creatures_text_turtle.clear()
+        self.total_creatures_text_turtle.write(self.total_creatures_text, align="center", font=("Arial", 16, "bold"))
+        print(f'total creatures: {self.total_creatures}')
+
+    # main function that loops constantly
+    def run(self):
+        self.populate()
+        while True:
+            life_cycle = []
+            to_remove = []
+            self.shuffle(life_cycle)
+            for i in range(0, len(life_cycle)):
+                each = life_cycle[i]
+                now = time.time()
+                if self.checkalive(each, to_remove, now) == False:
+                    pass
+                elif each:
+                    self.reproduction(each)
+                    each.live(all_creatures=life_cycle)
+
+            to_remove_set = set(to_remove)
+            for kingdom in self.creatures:
+                # Process creatures that need to die
+                for each in filter(to_remove_set.__contains__, kingdom):
+                    each.die()
+                # Remove creatures efficiently
+                kingdom[:] = [each for each in kingdom if each not in to_remove_set]
+            self.total_creatures_text_print()
 
 
-
-for i in range(0, 100):
-    a = Creature()
-    creatures.append(a)
-    print(a.name)
-
-while True:
-    print(f'This is cycle {cycles}. There are {len(creatures)} creatures alive.')
-    print(creatures)
-    # adds +1 every time the simulation cycle runs
-    cycles += 1
-    # this loops through list of all creatures and calls their live() function
-    for creature in creatures:
-        creature.live()
-    # this loops through list of all creatures and checks if they are alive, if not alive, get removed from creature list
-    i = 0
-    length = len(creatures)
-    while i < length:
-        if not creatures[i].alive:
-            creatures.remove(creatures[i])
-            length -= 1
-            i -= 1
-        i += 1
-    # this checks if the creatures list is 0 and then breaks the loop if so. currently all creatures die after 5 cycles.
-    if len(creatures) == 0:
-        print('There are 0 creatures remaining.')
-        break
+a = World()
+a.run()
 
 
