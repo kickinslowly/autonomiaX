@@ -97,9 +97,9 @@ class Creature:
 
 class Bacteria(Creature):
     def __init__(self, location=None):
-        super().__init__()
         if location is None:
             location = [random.randint(-400, 400), random.randint(-400, 400)]
+        super().__init__(location)
 
         self.type = 'Bacteria'
         self.carbon = 1
@@ -119,9 +119,9 @@ class Bacteria(Creature):
 
 class Protista(Creature):
     def __init__(self, location=None):
-        super().__init__()
         if location is None:
             location = [random.randint(-400, 400), random.randint(-400, 400)]
+        super().__init__(location)
         self.type = 'Protista'
         self.carbon = 5
         self.nitrogen = 5
@@ -136,9 +136,9 @@ class Protista(Creature):
 
 class Plantae(Creature):
     def __init__(self, location=None):
-        super().__init__()
         if location is None:
             location = [random.randint(-400, 400), random.randint(-400, 400)]
+        super().__init__(location)
         self.type = 'Plantae'
         self.carbon = 5
         self.nitrogen = 5
@@ -156,9 +156,9 @@ class Plantae(Creature):
 
 class Fungi(Creature):
     def __init__(self, location=None):
-        super().__init__()
         if location is None:
             location = [random.randint(-400, 400), random.randint(-400, 400)]
+        super().__init__(location)
         self.type = 'Fungi'
         self.carbon = 5
         self.nitrogen = 5
@@ -174,9 +174,9 @@ class Fungi(Creature):
 
 class Animalia(Creature):
     def __init__(self, location=None):
-        super().__init__()
         if location is None:
             location = [random.randint(-400, 400), random.randint(-400, 400)]
+        super().__init__(location)
         self.type = 'Animalia'
         self.lifespan = time.time() + random.randint(0, 35)
         self.carbon = 5
